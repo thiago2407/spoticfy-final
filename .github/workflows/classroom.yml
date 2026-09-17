@@ -1,0 +1,41 @@
+name: GitHub Classroom Workflow
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+
+permissions:
+  checks: write
+  actions: read
+  contents: read
+
+jobs:
+  build:
+    if: github.actor != 'github-classroom[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: 'SpoTICfy - Tests API'
+        id: tests
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: 'SpoTICfy - Tests API'
+          command: npm test
+          timeout: '2'
+          max-score: '1'
+
+      - name: Autograding Reporter
+        uses: classroom-resources/autograding-grading-reporter@v1
+        env:
+          TESTS_RESULTS: "${{steps.tests.outputs.result}}"
+        with:
+          runners: tests
