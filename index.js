@@ -25,7 +25,7 @@ app.get("/artistas/:id/albumes", artistas.getAlbumesByArtista);
 app.get("/artistas/:id/canciones", artistas.getCancionesByArtista);
 
 // Albumes
-
+// TODO
 // Completar con las rutas de albumes
 // Para acceder a cada funcion de albumes, se debe hacer de la siguiente forma:
 // albumes.getAlbumes;
