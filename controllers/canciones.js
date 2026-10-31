@@ -6,30 +6,20 @@ import { query } from "../db.js";
  * @param {import('express').Response} res
  */
 const getCanciones = async (_, res) => {
-  // Completar con la consulta que devuelve todas las canciones
-  // Recordar que los parámetros de una consulta GET se encuentran en req.params
-  // Deberían devolver los datos de la siguiente forma:
-  /*
-        [
-            {
-                "id": "Id de la canción",
-                "nombre": "Nombre de la canción",
-                "nombre_artista": "Id del artista",
-                "nombre_album": "Id del album",
-                "duracion": "Duración de la canción",
-                "reproducciones": "Reproducciones de la canción"
-            },
-            {
-                "id": "Id de la canción",
-                "nombre": "Nombre de la canción",
-                "nombre_artista": "Id del artista",
-                "nombre_album": "Id del album",
-                "duracion": "Duración de la canción",
-                "reproducciones": "Reproducciones de la canción"
-            },
-            ...
-        ]
-    */
+    const result = await query(`
+      SELECT 
+        c.id,
+        c.nombre,
+        ar.nombre as nombre_artista,
+        al.nombre as nombre_album,
+        c.duracion,
+        c.reproducciones
+      FROM canciones c
+      JOIN albumes al ON c.album = al.id
+      JOIN artistas ar ON c.album = ar.id
+    `);
+
+    res.json(result.rows);
 };
 
 /**
@@ -51,6 +41,22 @@ const getCancion = async (req, res) => {
             "reproducciones": "Reproducciones de la canción"
         }
     */
+    const {id} = req.params;
+    const result = await query(`
+      SELECT 
+        c.id,
+        c.nombre,
+        ar.nombre as nombre_artista,
+        al.nombre as nombre_album,
+        c.duracion,
+        c.reproducciones
+      FROM canciones c
+      JOIN albumes al ON c.album = al.id
+      JOIN artistas ar ON c.album = ar.id
+      WHERE c.id = $1
+    `, [id]);
+
+    res.json(result.rows[0]);
 };
 
 /**

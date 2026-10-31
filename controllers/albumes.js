@@ -6,24 +6,15 @@ import { query } from "../db.js";
  * @param {import('express').Response} res
  */
 const getAlbumes = async (_, res) => {
-  // Completar con la consulta que devuelve todos los albumes
-  // Recordar que los parámetros de una consulta GET se encuentran en req.params
-  // Deberían devolver los datos de la siguiente forma:
-  /*
-        [
-            {
-                "id": 1,
-                "nombre": "Nombre del album",
-                "nombre_artista": "Nombre del artista"
-            },
-            {
-                "id": 2,
-                "nombre": "Nombre del album",
-                "nombre_artista": "Nombre del artista"
-            },
-            ...
-        ]
-    */
+    const result = await query(`
+            SELECT 
+                albumes.id,
+                albumes.nombre,
+                artistas.nombre AS nombre_artista 
+            FROM albumes
+                JOIN artistas ON albumes.artista = artistas.id
+        `);
+    res.json(result.rows);
 };
 
 /**
@@ -32,16 +23,16 @@ const getAlbumes = async (_, res) => {
  * @param {import('express').Response} res
  */
 const getAlbum = async (req, res) => {
-  // Completar con la consulta que devuelve un album por id
-  // Recordar que los parámetros de una consulta GET se encuentran en req.params
-  // Deberían devolver los datos de la siguiente forma:
-  /*
-        {
-            "id": 1,
-            "nombre": "Nombre del album",
-            "nombre_artista": "Nombre del artista"
-        }
-    */
+   const result = await query(`
+            SELECT 
+                albumes.id,
+                albumes.nombre,
+                artistas.nombre AS nombre_artista 
+            FROM albumes
+                JOIN artistas ON albumes.artista = artistas.id
+            WHERE albumes.id = $1
+        `, [req.params.id]);
+    res.json(result.rows[0]);
 };
 
 /**
@@ -50,15 +41,9 @@ const getAlbum = async (req, res) => {
  * @param {import('express').Response} res
  */
 const createAlbum = async (req, res) => {
-  // Completar con la consulta que crea un album
-  // Recordar que los parámetros de una consulta POST se encuentran en req.body
-  // Deberían recbir los datos de la siguiente forma:
-  /*
-        {
-            "nombre": "Nombre del album",
-            "artista": "Id del artista"
-        }
-    */
+    const { nombre, artista } = req.body;
+    await query("INSERT INTO albumes (nombre, artista) VALUES ($1, $2)", [nombre, artista]);
+    res.status(201).json({ nombre, artista })
 };
 
 /**
@@ -67,15 +52,13 @@ const createAlbum = async (req, res) => {
  * @param {import('express').Response} res
  */
 const updateAlbum = async (req, res) => {
-  // Completar con la consulta que actualiza un album
-  // Recordar que en este caso tienen parámetros en req.params (el id) y en req.body (los demás datos)
-  // Deberían recbir los datos de la siguiente forma:
-  /*
-        {
-            "nombre": "Nombre del album",
-            "artista": "Id del artista"
-        }
-    */
+    const { nombre, artista } = req.body;
+    await query("UPDATE albumes SET nombre = $1, artista = $2 WHERE id = $3", [
+        nombre,
+        artista,
+        req.params.id,
+    ]);
+    res.json({ nombre, artista });
 };
 
 /**
@@ -84,9 +67,13 @@ const updateAlbum = async (req, res) => {
  * @param {import('express').Response} res
  */
 const deleteAlbum = async (req, res) => {
-  // Completar con la consulta que elimina un album
-  // ¡Ojo con albumes que tengan canciones! Devuelvan el error apropiado, 400.
-  // Recordar que los parámetros de una consulta DELETE se encuentran en req.params
+    const {id} = req.params
+    try {
+        await query("delete from albumes where id = $1", [id])
+    } catch (ex) {
+        return res.status(400).json({error: "No se pudo eliminar el album porque contiene canciones"});
+    }
+    res.status(200).json({mensaje: "Eliminado exitosamente"});
 };
 
 /**
@@ -95,9 +82,20 @@ const deleteAlbum = async (req, res) => {
  * @param {import('express').Response} res
  */
 const getCancionesByAlbum = async (req, res) => {
-  // Completar con la consulta que devuelve las canciones de un album
-  // Recordar que los parámetros de una consulta GET se encuentran en req.params
-  // Deberían devolver los datos de la misma forma que getCanciones
+    const {id} = req.params
+    const result = await query(`SELECT 
+        c.id,
+        c.nombre,
+        ar.nombre as nombre_artista,
+        al.nombre as nombre_album,
+        c.duracion,
+        c.reproducciones
+    FROM canciones c
+    JOIN albumes al ON c.album = al.id
+    JOIN artistas ar ON c.album = ar.id
+    WHERE album = $1;
+    `, [id]);
+    res.json(result.rows);
 };
 
 const albumes = {
